@@ -3,13 +3,12 @@ const User = require("../models/user");
 //GET /users
 
 const getUsers = (req, res) => {
-  console.log("IN CONTROLLER");
-  // User.find({})
-  //   .then((users) => res.status(200).send(users))
-  //   .catch((err) => {
-  //     console.error(err);
-  //     return res.status(500).send({ message: err.message });
-  //   });
+  User.find({})
+    .then((users) => res.status(200).send(users))
+    .catch((err) => {
+      console.error(err);
+      return res.status(500).send({ message: err.message });
+    });
 };
 
 const createUser = (req, res) => {
