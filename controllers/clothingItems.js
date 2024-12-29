@@ -1,30 +1,35 @@
 const clothingItem = require("../models/clothingItem");
 const ClothingItems = require("../models/clothingItem");
+const { ERROR_CODES, ERROR_MESSAGES, handleError } = require("../utils/errors");
 
-const getClothignItems = (req, res) => {
+const getClothingItems = (req, res) => {
   ClothingItems.find({})
     .then((item) => res.status(200).send(item))
-    .catch((err) => {
-      console.error(err);
-      return res.status(500).send({ message: err.message });
-    });
+    .catch((err) => handleError(err, res));
 };
 
 const createItem = (req, res) => {
   const { name, weather, imageUrl } = req.body;
   const owner = req.user._id;
 
+  if (!owner) {
+    console.error("Missing owner in request");
+    return res
+      .status(ERROR_CODES.BAD_REQUEST)
+      .send({ message: ERROR_MESSAGES.MISSING_OWNER });
+  }
+  if (!name || !weather || !imageUrl) {
+    return res
+      .status(ERROR_CODES.BAD_REQUEST)
+      .send({ message: ERROR_MESSAGES.MISSING_FIELDS });
+  }
+
   ClothingItems.create({ name, weather, imageUrl, owner })
     .then((item) => {
       console.log(item);
       res.status(201).send({ data: item });
     })
-    .catch((err) => {
-      if (err.name === "ValidationError") {
-        return res.status(400).send({ message: err.message });
-      }
-      return res.status(500).send({ message: err.message });
-    });
+    .catch((err) => handleError(err, res));
 };
 
 const deleteItem = (req, res) => {
@@ -33,13 +38,8 @@ const deleteItem = (req, res) => {
   clothingItem
     .findByIdAndDelete(itemId)
     .orFail()
-    .then((item) => res.status(200).send({}))
-    .catch((err) => {
-      if (err.name == "DocumentNotFoundError") {
-        return res.status(404).send({ message: err.message });
-      }
-      return res.status(400).send({ message: err.message });
-    });
+    .then(() => res.status(200).send({}))
+    .catch((err) => handleError(err, res));
 };
 
 const likeItem = (req, res) => {
@@ -53,15 +53,7 @@ const likeItem = (req, res) => {
     )
     .orFail()
     .then((item) => res.status(200).send({ data: item }))
-    .catch((err) => {
-      if (err.name === "CastError") {
-        return res.status(400).send({ message: err.message });
-      }
-      if (err.name == "DocumentNotFoundError") {
-        return res.status(404).send({ message: err.message });
-      }
-      return res.status(500).send({ message: err.message });
-    });
+    .catch((err) => handleError(err, res));
 };
 
 const dislikeItem = (req, res) => {
@@ -75,18 +67,11 @@ const dislikeItem = (req, res) => {
     )
     .orFail()
     .then((item) => res.status(200).send({ data: item }))
-    .catch((err) => {
-      if (err.name == "DocumentNotFoundError") {
-        console.log(err);
-        return res.status(404).send({ message: err.message });
-      }
-      console.log(err.message);
-      return res.status(400).send({ message: err.message });
-    });
+    .catch((err) => handleError(err, res));
 };
 
 module.exports = {
-  getClothignItems,
+  getClothingItems,
   createItem,
   deleteItem,
   likeItem,
