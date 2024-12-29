@@ -32,14 +32,18 @@ const createItem = (req, res) => {
     .catch((err) => handleError(err, res));
 };
 
-const deleteItem = (req, res) => {
+const deleteItem = async (req, res) => {
   const { itemId } = req.params;
-
-  clothingItem
-    .findByIdAndDelete(itemId)
-    .orFail()
-    .then(() => res.status(200).send({}))
-    .catch((err) => handleError(err, res));
+  try {
+    const item = await clothingItem.findByIdAndDelete(itemId).orFail(() => {
+      const error = new Error("DocumentNotFoundError");
+      error.name = "DocumentNotFoundError";
+      throw error;
+    });
+    res.status(200).send({ message: "Item deleted successfully", data: item });
+  } catch (err) {
+    handleError(err, res);
+  }
 };
 
 const likeItem = (req, res) => {
