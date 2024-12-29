@@ -24,7 +24,7 @@ const createItem = (req, res) => {
       .send({ message: ERROR_MESSAGES.MISSING_FIELDS });
   }
 
-  ClothingItems.create({ name, weather, imageUrl, owner })
+  return ClothingItems.create({ name, weather, imageUrl, owner })
     .then((item) => {
       console.log(item);
       res.status(201).send({ data: item });
