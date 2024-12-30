@@ -35,12 +35,8 @@ const createItem = (req, res) => {
 const deleteItem = async (req, res) => {
   const { itemId } = req.params;
   try {
-    const item = await clothingItem.findByIdAndDelete(itemId).orFail(() => {
-      const error = new Error("DocumentNotFoundError");
-      error.name = "DocumentNotFoundError";
-      throw error;
-    });
-    res.status(200).send({ message: "Item deleted successfully", data: item });
+    const item = await clothingItem.findByIdAndDelete(itemId).orFail();
+    res.send({ message: "Item deleted successfully", data: item });
   } catch (err) {
     handleError(err, res);
   }
