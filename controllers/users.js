@@ -19,7 +19,7 @@ const createUser = (req, res) => {
   try {
     const { email, password, name, avatar } = req.body;
 
-    if (!email | !password | !name | !avatar) {
+    if (!email || !password || !name || !avatar) {
       res.status(400).send({ message: "All fields are required" });
       return;
     }
@@ -53,8 +53,7 @@ const createUser = (req, res) => {
             .send({ message: ERROR_MESSAGES.BAD_REQUEST });
         }
         if (err.code === 11000) {
-          res.status(409).send({ message: "Email already exists" });
-          return;
+          return res.status(409).send({ message: "Email already exists" });
         }
         return res
           .status(ERROR_CODES.SERVER_ERROR)
