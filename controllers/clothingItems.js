@@ -32,14 +32,41 @@ const createItem = (req, res) => {
     .catch((err) => handleError(err, res));
 };
 
-const deleteItem = async (req, res) => {
+const deleteItem = (req, res) => {
   const { itemId } = req.params;
-  try {
-    const item = await clothingItem.findByIdAndDelete(itemId).orFail();
-    res.send({ message: "Item deleted successfully", data: item });
-  } catch (err) {
-    handleError(err, res);
+  const userId = req.user?._id;
+
+  if (!itemId) {
+    res.status(400).send({ message: "Item ID is required" });
+    return;
   }
+
+  if (!userId) {
+    res
+      .status(403)
+      .send({ message: "Unauthorized. User ID is missing or invalid" });
+    return;
+  }
+
+  clothingItem
+    .findById(itemId)
+    .orFail()
+    .then((item) => {
+      if (!item.owner.equals(userId)) {
+        return res
+          .status(403)
+          .send({
+            message: `Unauthorized. You can not delete someone else's post`,
+          });
+      }
+      return clothingItem.findByIdAndDelete(itemId);
+    })
+    .then((item) => {
+      res.send({ message: "Item deleted successfully", data: item });
+    })
+    .catch((err) => {
+      handleError(err, res);
+    });
 };
 
 const likeItem = (req, res) => {
