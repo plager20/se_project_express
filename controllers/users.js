@@ -4,23 +4,14 @@ const User = require("../models/user");
 const { JWT_SECRET } = require("../utils/config");
 const { ERROR_CODES, ERROR_MESSAGES } = require("../utils/errors");
 
-const getUsers = (req, res) => {
-  User.find({})
-    .then((users) => res.send(users))
-    .catch((err) => {
-      console.error(err);
-      return res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: ERROR_MESSAGES.SERVER_ERROR });
-    });
-};
-
 const createUser = (req, res) => {
   try {
     const { email, password, name, avatar } = req.body;
 
     if (!email || !password || !name || !avatar) {
-      res.status(400).send({ message: "All fields are required" });
+      res
+        .status(ERROR_CODES.BAD_REQUEST)
+        .send({ message: "All fields are required" });
       return;
     }
 
@@ -53,7 +44,9 @@ const createUser = (req, res) => {
             .send({ message: ERROR_MESSAGES.BAD_REQUEST });
         }
         if (err.code === 11000) {
-          return res.status(409).send({ message: "Email already exists" });
+          return res
+            .status(ERROR_CODES.CONFLICT)
+            .send({ message: "Email already exists" });
         }
         return res
           .status(ERROR_CODES.SERVER_ERROR)
@@ -69,7 +62,9 @@ const createUser = (req, res) => {
 const login = (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res.status(400).send({ message: "Email and password are required" });
+    return res
+      .status(ERROR_CODES.BAD_REQUEST)
+      .send({ message: "Email and password are required" });
   }
 
   return User.findUserByCredentials(email, password)
@@ -80,8 +75,12 @@ const login = (req, res) => {
       res.send({ token });
     })
     .catch((err) => {
-      console.log(err);
-      res.status(401).send({ message: err.message });
+      if (err.message === "Incorrect email or password") {
+        return res
+          .status(ERROR_CODES.UNAUTHORIZED)
+          .send(ERROR_MESSAGES.UNAUTHORIZED);
+      }
+      res.status(ERROR_CODES.UNAUTHORIZED).send({ message: err.message });
     });
 };
 
@@ -146,4 +145,4 @@ const updateUser = (req, res) => {
     });
 };
 
-module.exports = { getCurrentUser, createUser, getUsers, login, updateUser };
+module.exports = { getCurrentUser, createUser, login, updateUser };

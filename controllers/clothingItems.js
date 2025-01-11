@@ -37,14 +37,9 @@ const deleteItem = (req, res) => {
   const userId = req.user?._id;
 
   if (!itemId) {
-    res.status(400).send({ message: "Item ID is required" });
-    return;
-  }
-
-  if (!userId) {
     res
-      .status(403)
-      .send({ message: "Unauthorized. User ID is missing or invalid" });
+      .status(ERROR_CODES.BAD_REQUEST)
+      .send({ message: "Item ID is required" });
     return;
   }
 
@@ -53,17 +48,20 @@ const deleteItem = (req, res) => {
     .orFail()
     .then((item) => {
       if (!item.owner.equals(userId)) {
-        return res
-          .status(403)
-          .send({
-            message: `Unauthorized. You can not delete someone else's post`,
-          });
+        return res.status(ERROR_CODES.FORBIDDEN).send(ERROR_MESSAGES.FORBIDDEN);
       }
-      return clothingItem.findByIdAndDelete(itemId);
+      return clothingItem.findByIdAndDelete(itemId).then((deletedItem) => {
+        if (!deletedItem) {
+          return res
+            .status(ERROR_CODES.NOT_FOUND)
+            .send(ERROR_MESSAGES.NOT_FOUND);
+        }
+        return res
+          .status(200)
+          .send({ message: "Item deleted successfully", data: deletedItem });
+      });
     })
-    .then((item) => {
-      res.send({ message: "Item deleted successfully", data: item });
-    })
+
     .catch((err) => {
       handleError(err, res);
     });
