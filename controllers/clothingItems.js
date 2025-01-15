@@ -48,7 +48,9 @@ const deleteItem = (req, res) => {
     .orFail()
     .then((item) => {
       if (!item.owner.equals(userId)) {
-        return res.status(ERROR_CODES.FORBIDDEN).send(ERROR_MESSAGES.FORBIDDEN);
+        return res
+          .status(ERROR_CODES.FORBIDDEN)
+          .send({ message: ERROR_MESSAGES.FORBIDDEN });
       }
       return clothingItem.findByIdAndDelete(itemId).then((deletedItem) => {
         if (!deletedItem) {

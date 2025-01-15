@@ -1,7 +1,7 @@
 const ERROR_CODES = {
   BAD_REQUEST: 400, // Invalid data passed
-  UNAUTHORIZED: 401, //Invalid Authorization
-  FORBIDDEN: 403, //Invalid Action
+  UNAUTHORIZED: 401, // Invalid Authorization
+  FORBIDDEN: 403, // Invalid Action
   NOT_FOUND: 404, // Resource not found
   CONFLICT: 409,
   SERVER_ERROR: 500, // Default server error

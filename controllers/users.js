@@ -78,9 +78,11 @@ const login = (req, res) => {
       if (err.message === "Incorrect email or password") {
         return res
           .status(ERROR_CODES.UNAUTHORIZED)
-          .send(ERROR_MESSAGES.UNAUTHORIZED);
+          .send({ message: ERROR_MESSAGES.UNAUTHORIZED });
       }
-      res.status(ERROR_CODES.UNAUTHORIZED).send({ message: err.message });
+      return res
+        .status(ERROR_CODES.SERVER_ERROR)
+        .send({ message: ERROR_MESSAGES.SERVER_ERROR });
     });
 };
 
