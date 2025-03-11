@@ -3,16 +3,17 @@ const { login, createUser } = require("../controllers/users");
 const userRouter = require("./users");
 const clothingItemRouter = require("./clothingItems");
 const { ERROR_CODES, ERROR_MESSAGES } = require("../utils/errors");
+const { celebrate } = require("celebrate");
+const NotFoundError = require("../errors/notfound");
 
-router.post("/signin", login);
-router.post("/signup", createUser);
+router.post("/signin", celebrate, login);
+router.post("/signup", celebrate, createUser);
 
 router.use("/users", userRouter);
 router.use("/items", clothingItemRouter);
 
 router.use((req, res) => {
-  console.log(req);
-  res.status(ERROR_CODES.NOT_FOUND).send({ message: ERROR_MESSAGES.NOT_FOUND });
+  return next(new NotFoundError("Not Found"));
 });
 
 module.exports = router;
