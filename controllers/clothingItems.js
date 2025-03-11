@@ -1,14 +1,19 @@
 const clothingItem = require("../models/clothingItem");
 const ClothingItems = require("../models/clothingItem");
 const { ERROR_CODES, ERROR_MESSAGES, handleError } = require("../utils/errors");
+const BadRequestError = require("../errors/badrequest");
+const NotFoundError = require("../errors/notfound");
 
-const getClothingItems = (req, res) => {
+const getClothingItems = (req, res, next) => {
   ClothingItems.find({})
     .then((item) => res.status(200).send(item))
-    .catch((err) => handleError(err, res));
+    .catch((err) => {
+      res.status(ERROR_CODES.SERVER_ERROR);
+      return next(err);
+    });
 };
 
-const createItem = (req, res) => {
+const createItem = (req, res, next) => {
   const { name, weather, imageUrl } = req.body;
   const owner = req.user._id;
 
@@ -29,10 +34,15 @@ const createItem = (req, res) => {
       console.log(item);
       res.status(201).send({ data: item });
     })
-    .catch((err) => handleError(err, res));
+    .catch((err) => {
+      if (err.name === "ValidationError") {
+        return next(new BadRequestError("Invalid request"));
+      }
+      return next(err);
+    });
 };
 
-const deleteItem = (req, res) => {
+const deleteItem = (req, res, next) => {
   const { itemId } = req.params;
   const userId = req.user?._id;
 
@@ -65,11 +75,14 @@ const deleteItem = (req, res) => {
     })
 
     .catch((err) => {
-      handleError(err, res);
+      if (err.name === "CastError") {
+        return next(new BadRequestError("Invalid ID format"));
+      }
+      return next(err);
     });
 };
 
-const likeItem = (req, res) => {
+const likeItem = (req, res, next) => {
   const { itemId } = req.params;
 
   clothingItem
@@ -80,10 +93,19 @@ const likeItem = (req, res) => {
     )
     .orFail()
     .then((item) => res.status(200).send({ data: item }))
-    .catch((err) => handleError(err, res));
+    .catch((err) => {
+      console.error(err);
+      if (err.name === "CastError") {
+        return next(new BadRequestError("Invalid data"));
+      }
+      if (err.name === "DocumentNotFoundError") {
+        return next(new NotFoundError("Item not found"));
+      }
+      return next(err);
+    });
 };
 
-const dislikeItem = (req, res) => {
+const dislikeItem = (req, res, next) => {
   const { itemId } = req.params;
 
   clothingItem
@@ -94,7 +116,16 @@ const dislikeItem = (req, res) => {
     )
     .orFail()
     .then((item) => res.status(200).send({ data: item }))
-    .catch((err) => handleError(err, res));
+    .catch((err) => {
+      console.error(err);
+      if (err.name === "CastError") {
+        return next(new BadRequestError("Invalid data"));
+      }
+      if (err.name === "DocumentNotFoundError") {
+        return next(new NotFoundError("Item not found"));
+      }
+      return next(err);
+    });
 };
 
 module.exports = {
