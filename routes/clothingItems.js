@@ -10,9 +10,9 @@ const { authorize } = require("../middlewares/auth");
 const { validateCardBody, validateId } = require("../middlewares/validation");
 
 router.get("/", getClothingItems);
-router.post("/", validateCardBody, authorize, createItem);
-router.delete("/:itemId", validateId, authorize, deleteItem);
-router.put("/:itemId/likes", validateId, authorize, likeItem);
-router.delete("/:itemId/likes", validateId, authorize, dislikeItem);
+router.post("/", authorize, validateCardBody, createItem);
+router.delete("/:itemId", authorize, validateId, deleteItem);
+router.put("/:itemId/likes", authorize, validateId, likeItem);
+router.delete("/:itemId/likes", authorize, validateId, dislikeItem);
 
 module.exports = router;

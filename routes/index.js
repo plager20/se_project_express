@@ -14,8 +14,8 @@ router.post("/signup", validateUserInfoBody, createUser);
 router.use("/users", userRouter);
 router.use("/items", clothingItemRouter);
 
-router.use((req, res) => {
-  return next(new NotFoundError("Not Found"));
+router.use((req, res, next) => {
+  next(new NotFoundError("Not Found"));
 });
 
 module.exports = router;

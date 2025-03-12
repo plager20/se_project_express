@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const { JWT_SECRET } = require("../utils/config");
-const { ERROR_CODES, ERROR_MESSAGES } = require("../utils/errors");
+const { ERROR_CODES, ERROR_MESSAGES, handleError } = require("../utils/errors");
 const ConflictError = require("../errors/conflict");
 const BadRequestError = require("../errors/badrequest");
 const NotFoundError = require("../errors/notfound");
@@ -42,9 +42,7 @@ const createUser = (req, res, next) => {
         return next(err);
       });
   } catch (err) {
-    res
-      .status(ERROR_CODES.SERVER_ERROR)
-      .send({ message: ERROR_MESSAGES.SERVER_ERROR });
+    return handleError();
   }
 };
 
@@ -62,7 +60,7 @@ const login = (req, res, next) => {
       res.send({ token });
     })
     .catch((err) => {
-      if (err.message === "Incorrect email or Password") {
+      if (err.message === "Incorrect email or password") {
         return next(new UnauthorizedError("Incorrect username or password"));
       }
       return next(err);
@@ -99,7 +97,7 @@ const updateUser = (req, res, next) => {
       if (!user) {
         return next(new NotFoundError("User not found"));
       }
-      res.status(200).send(user);
+      return res.status(200).send(user);
     })
     .catch((err) => {
       console.error(err);

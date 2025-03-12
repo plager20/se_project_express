@@ -1,6 +1,6 @@
 const clothingItem = require("../models/clothingItem");
 const ClothingItems = require("../models/clothingItem");
-const { ERROR_CODES, ERROR_MESSAGES, handleError } = require("../utils/errors");
+const { ERROR_CODES, ERROR_MESSAGES } = require("../utils/errors");
 const BadRequestError = require("../errors/badrequest");
 const NotFoundError = require("../errors/notfound");
 
@@ -8,7 +8,6 @@ const getClothingItems = (req, res, next) => {
   ClothingItems.find({})
     .then((item) => res.status(200).send(item))
     .catch((err) => {
-      res.status(ERROR_CODES.SERVER_ERROR);
       return next(err);
     });
 };
@@ -16,18 +15,6 @@ const getClothingItems = (req, res, next) => {
 const createItem = (req, res, next) => {
   const { name, weather, imageUrl } = req.body;
   const owner = req.user._id;
-
-  if (!owner) {
-    console.error("Missing owner in request");
-    return res
-      .status(ERROR_CODES.BAD_REQUEST)
-      .send({ message: ERROR_MESSAGES.MISSING_OWNER });
-  }
-  if (!name || !weather || !imageUrl) {
-    return res
-      .status(ERROR_CODES.BAD_REQUEST)
-      .send({ message: ERROR_MESSAGES.MISSING_FIELDS });
-  }
 
   return ClothingItems.create({ name, weather, imageUrl, owner })
     .then((item) => {
@@ -38,6 +25,17 @@ const createItem = (req, res, next) => {
       if (err.name === "ValidationError") {
         return next(new BadRequestError("Invalid request"));
       }
+      if (!owner) {
+        console.error("Missing owner in request");
+        return res
+          .status(ERROR_CODES.BAD_REQUEST)
+          .send({ message: ERROR_MESSAGES.MISSING_OWNER });
+      }
+      if (!name || !weather || !imageUrl) {
+        return res
+          .status(ERROR_CODES.BAD_REQUEST)
+          .send({ message: ERROR_MESSAGES.MISSING_FIELDS });
+      }
       return next(err);
     });
 };
@@ -45,13 +43,6 @@ const createItem = (req, res, next) => {
 const deleteItem = (req, res, next) => {
   const { itemId } = req.params;
   const userId = req.user?._id;
-
-  if (!itemId) {
-    res
-      .status(ERROR_CODES.BAD_REQUEST)
-      .send({ message: "Item ID is required" });
-    return;
-  }
 
   clothingItem
     .findById(itemId)
@@ -67,6 +58,12 @@ const deleteItem = (req, res, next) => {
           return res
             .status(ERROR_CODES.NOT_FOUND)
             .send(ERROR_MESSAGES.NOT_FOUND);
+        }
+        if (!itemId) {
+          res
+            .status(ERROR_CODES.BAD_REQUEST)
+            .send({ message: "Item ID is required" });
+          return;
         }
         return res
           .status(200)
