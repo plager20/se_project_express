@@ -1,8 +1,8 @@
 const clothingItem = require("../models/clothingItem");
 const ClothingItems = require("../models/clothingItem");
-const { ERROR_CODES, ERROR_MESSAGES } = require("../utils/errors");
 const BadRequestError = require("../errors/badrequest");
 const NotFoundError = require("../errors/notfound");
+const ForbiddenError = require("../errors/forbidden");
 
 const getClothingItems = (req, res, next) => {
   ClothingItems.find({})
@@ -26,15 +26,10 @@ const createItem = (req, res, next) => {
         return next(new BadRequestError("Invalid request"));
       }
       if (!owner) {
-        console.error("Missing owner in request");
-        return res
-          .status(ERROR_CODES.BAD_REQUEST)
-          .send({ message: ERROR_MESSAGES.MISSING_OWNER });
+        return next(new BadRequestError("Missing owner in request"));
       }
       if (!name || !weather || !imageUrl) {
-        return res
-          .status(ERROR_CODES.BAD_REQUEST)
-          .send({ message: ERROR_MESSAGES.MISSING_FIELDS });
+        return next(new BadRequestError("All fields are required"));
       }
       return next(err);
     });
@@ -49,28 +44,22 @@ const deleteItem = (req, res, next) => {
     .orFail()
     .then((item) => {
       if (!item.owner.equals(userId)) {
-        return res
-          .status(ERROR_CODES.FORBIDDEN)
-          .send({ message: ERROR_MESSAGES.FORBIDDEN });
+        return next(
+          new ForbiddenError("You are not authorized to perorm this action.")
+        );
       }
       return clothingItem.findByIdAndDelete(itemId).then((deletedItem) => {
         if (!deletedItem) {
-          return res
-            .status(ERROR_CODES.NOT_FOUND)
-            .send(ERROR_MESSAGES.NOT_FOUND);
+          return next(new NotFoundError("Item not found"));
         }
         if (!itemId) {
-          res
-            .status(ERROR_CODES.BAD_REQUEST)
-            .send({ message: "Item ID is required" });
-          return;
+          return next(new BadRequestError("Item Id is required"));
         }
         return res
           .status(200)
           .send({ message: "Item deleted successfully", data: deletedItem });
       });
     })
-
     .catch((err) => {
       if (err.name === "CastError") {
         return next(new BadRequestError("Invalid ID format"));
