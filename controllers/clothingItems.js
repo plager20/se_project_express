@@ -6,10 +6,10 @@ const ForbiddenError = require("../errors/forbidden");
 
 const getClothingItems = (req, res, next) => {
   ClothingItems.find({})
-    .then((item) => res.status(200).send(item))
-    .catch((err) => {
-      return next(err);
-    });
+    .then((item) => {
+      res.status(200).send(item);
+    })
+    .catch((err) => next(err));
 };
 
 const createItem = (req, res, next) => {
@@ -24,12 +24,6 @@ const createItem = (req, res, next) => {
     .catch((err) => {
       if (err.name === "ValidationError") {
         return next(new BadRequestError("Invalid request"));
-      }
-      if (!owner) {
-        return next(new BadRequestError("Missing owner in request"));
-      }
-      if (!name || !weather || !imageUrl) {
-        return next(new BadRequestError("All fields are required"));
       }
       return next(err);
     });
@@ -61,6 +55,9 @@ const deleteItem = (req, res, next) => {
       });
     })
     .catch((err) => {
+      if (err.name === "DocumentNotFoundError") {
+        return next(new NotFoundError("Item not found"));
+      }
       if (err.name === "CastError") {
         return next(new BadRequestError("Invalid ID format"));
       }

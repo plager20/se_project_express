@@ -8,41 +8,34 @@ const NotFoundError = require("../errors/notfound");
 const UnauthorizedError = require("../errors/unauthorized");
 
 const createUser = (req, res, next) => {
-  try {
-    const { email, password, name, avatar } = req.body;
+  const { email, password, name, avatar } = req.body;
 
-    User.findOne({ email })
-      .then((existingUser) => {
-        if (!email || !password || !name || !avatar) {
-          return next(new BadRequestError("All fields are required"));
-        }
-        if (existingUser) {
-          return next(new ConflictError("Email already exists"));
-        }
-        return bcrypt.hash(password, 10);
-      })
-      .then((hashedPassword) => {
-        if (!hashedPassword) return null;
+  User.findOne({ email })
+    .then((existingUser) => {
+      if (existingUser) {
+        return next(new ConflictError("Email already exists"));
+      }
+      return bcrypt.hash(password, 10);
+    })
+    .then((hashedPassword) => {
+      if (!hashedPassword) return null;
 
-        return User.create({ name, avatar, email, password: hashedPassword });
-      })
-      .then((user) => {
-        if (user) {
-          const userObject = user.toObject();
-          delete userObject.password;
-          res.status(201).send(userObject);
-        }
-      })
-      .catch((err) => {
-        console.error("An error occured while creating user", err);
-        if (err.name === "ValidationError") {
-          return next(new BadRequestError("Invalid data"));
-        }
-        return next(err);
-      });
-  } catch (err) {
-    return next(err);
-  }
+      return User.create({ name, avatar, email, password: hashedPassword });
+    })
+    .then((user) => {
+      if (user) {
+        const userObject = user.toObject();
+        delete userObject.password;
+        res.status(201).send(userObject);
+      }
+    })
+    .catch((err) => {
+      console.error("An error occured while creating user", err);
+      if (err.name === "ValidationError") {
+        return next(new BadRequestError("Invalid data"));
+      }
+      return next(err);
+    });
 };
 
 const login = (req, res, next) => {
